@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Course Registration</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .course-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .course-item {
+      padding: 12px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .course-item:hover {
+      background: #e3f2fd;
+    }
+
+    .course-item input {
+      margin-right: 10px;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #registrationSection {
+      display: none;
+    }
+
+    #response, #registeredCourses {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #courseList {
+      margin-top: 10px;
+      text-align: left;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loginSection">
+      <h2>Student Login</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="name">Name:</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-group">
+          <label for="usn">USN:</label>
+          <input type="text" id="usn" pattern="01fe\d{2}[a-z]{3}\d{3}" 
+       title="Enter a valid USN (e.g., 01fe22bcs286)" required />
+
+        </div>
+        <div class="form-group">
+          <label for="email">College Email:</label>
+          <input type="email" id="email" pattern=".*@kletech\.ac\.in" required />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+
+    <div id="registrationSection">
+      <h2>Course Registration</h2>
+      <form id="courseForm">
+        <div class="course-list">
+          <label class="course-item"><input type="checkbox" name="courses" value="CN-2 (3 credits)"> CN-2 (3 credits)</label>
+          <label class="course-item"><input type="checkbox" name="courses" value="Cloud Computing (3 credits)"> Cloud Computing (3 credits)</label>
+          <label class="course-item"><input type="checkbox" name="courses" value="MINIPROJECT (5 credits)"> MINIPROJECT (5 credits)</label>
+          <label class="course-item"><input type="checkbox" name="courses" value="Blockchain (3 credits)"> Blockchain (3 credits)</label>
+          <label class="course-item"><input type="checkbox" name="courses" value="Edge Computing (3 credits)"> Edge Computing (3 credits)</label>
+          <label class="course-item"><input type="checkbox" name="courses" value="NLPGai (4 credits)"> NLPGai (4 credits)</label>
+          <label class="course-item"><input type="checkbox" name="courses" value="PALR (3 credits)"> PALR (3 credits)</label>
+        </div>
+        <button type="submit">Register Selected Courses</button>
+      </form>
+      <div id="response"></div>
+      <div id="registeredCourses" style="display:none;">
+        <h3>You Registered for:</h3>
+        <ul id="courseList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const courseForm = document.getElementById('courseForm');
+    const loginSection = document.getElementById('loginSection');
+    const registrationSection = document.getElementById('registrationSection');
+    const responseDiv = document.getElementById('response');
+    const courseList = document.getElementById('courseList');
+    const registeredCoursesDiv = document.getElementById('registeredCourses');
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const usn = document.getElementById('usn').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!name || !usn || !email.endsWith('@kletech.ac.in')) {
+        alert('Please enter valid details. Email must end with @kletech.ac.in');
+        return;
+      }
+
+      loginSection.style.display = "none";
+      registrationSection.style.display = "block";
+    });
+
+    courseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const selectedCourses = [];
+      document.querySelectorAll('input[name="courses"]:checked').forEach(checkbox => {
+        selectedCourses.push(checkbox.value);
+      });
+
+      if (selectedCourses.length === 0) {
+        responseDiv.textContent = "⚠️ Please select at least one course!";
+        responseDiv.style.color = "red";
+        return;
+      }
+
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courses: selectedCourses })
+      });
+
+      const data = await res.json();
+      responseDiv.textContent = data.message;
+      responseDiv.style.color = "green";
+
+      // Show registered list
+      courseList.innerHTML = "";
+      selectedCourses.forEach(course => {
+        const li = document.createElement('li');
+        li.textContent = course;
+        courseList.appendChild(li);
+      });
+      registeredCoursesDiv.style.display = "block";
+
+      courseForm.reset();
+    });
+  </script>
+</body>
+</html>
